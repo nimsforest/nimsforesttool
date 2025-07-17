@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/nimsforest/nimsforestpackagemanager/pkg/tool"
+	"github.com/nimsforest/nimsforesttool/tool"
 )
 
 // ExampleTool demonstrates how to create a basic tool
@@ -69,11 +69,11 @@ func (t *ExampleTool) ValidateConfig(config tool.Config) error {
 
 func (t *ExampleTool) HealthCheck(ctx context.Context) tool.HealthCheck {
 	health := t.BaseTool.HealthCheck(ctx)
-	
+
 	// Add custom health information
 	health.Details["api_connected"] = true
 	health.Details["cache_size"] = 1024
-	
+
 	return health
 }
 
@@ -211,7 +211,7 @@ func TestErrorHandling(t *testing.T) {
 func ExampleBaseTool() {
 	// Create a new tool
 	base := tool.NewBaseTool("mytool", "1.0.0", "My awesome tool")
-	
+
 	// Add a command
 	base.AddCommand(tool.Command{
 		Name:        "greet",
@@ -228,10 +228,10 @@ func ExampleBaseTool() {
 
 	// Register the tool
 	tool.Register(base)
-	
+
 	// Execute a command
 	base.Execute(context.Background(), "greet", []string{"Alice"})
-	
+
 	// Output: Hello, Alice!
 }
 
@@ -239,21 +239,21 @@ func ExampleBaseTool() {
 func ExampleRegistry() {
 	// Clear registry
 	tool.Clear()
-	
+
 	// Create and register a tool
 	mytool := tool.NewBaseTool("mytool", "1.0.0", "My tool")
 	tool.Register(mytool)
-	
+
 	// List all tools
 	tools := tool.List()
 	fmt.Printf("Found %d tools\n", len(tools))
-	
+
 	// Get a specific tool
 	retrieved, err := tool.Get("mytool")
 	if err == nil {
 		fmt.Printf("Retrieved tool: %s\n", retrieved.Name())
 	}
-	
+
 	// Output: Found 1 tools
 	// Retrieved tool: mytool
 }

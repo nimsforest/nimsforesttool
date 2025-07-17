@@ -50,21 +50,21 @@ func NewToolErrorWithCause(message, code string, cause error) *ToolError {
 
 // Error codes for common tool operations
 const (
-	ErrCodeToolNotFound        = "TOOL_NOT_FOUND"
-	ErrCodeToolAlreadyExists   = "TOOL_ALREADY_EXISTS"
-	ErrCodeInstallFailed       = "INSTALL_FAILED"
-	ErrCodeUpdateFailed        = "UPDATE_FAILED"
-	ErrCodeUninstallFailed     = "UNINSTALL_FAILED"
-	ErrCodeCommandNotFound     = "COMMAND_NOT_FOUND"
-	ErrCodeCommandFailed       = "COMMAND_FAILED"
-	ErrCodeDependencyNotFound  = "DEPENDENCY_NOT_FOUND"
-	ErrCodeDependencyConflict  = "DEPENDENCY_CONFLICT"
-	ErrCodeInvalidInstallMode  = "INVALID_INSTALL_MODE"
+	ErrCodeToolNotFound         = "TOOL_NOT_FOUND"
+	ErrCodeToolAlreadyExists    = "TOOL_ALREADY_EXISTS"
+	ErrCodeInstallFailed        = "INSTALL_FAILED"
+	ErrCodeUpdateFailed         = "UPDATE_FAILED"
+	ErrCodeUninstallFailed      = "UNINSTALL_FAILED"
+	ErrCodeCommandNotFound      = "COMMAND_NOT_FOUND"
+	ErrCodeCommandFailed        = "COMMAND_FAILED"
+	ErrCodeDependencyNotFound   = "DEPENDENCY_NOT_FOUND"
+	ErrCodeDependencyConflict   = "DEPENDENCY_CONFLICT"
+	ErrCodeInvalidInstallMode   = "INVALID_INSTALL_MODE"
 	ErrCodeInvalidConfiguration = "INVALID_CONFIGURATION"
-	ErrCodePermissionDenied    = "PERMISSION_DENIED"
-	ErrCodeNetworkError        = "NETWORK_ERROR"
-	ErrCodeValidationFailed    = "VALIDATION_FAILED"
-	ErrCodeHealthCheckFailed   = "HEALTH_CHECK_FAILED"
+	ErrCodePermissionDenied     = "PERMISSION_DENIED"
+	ErrCodeNetworkError         = "NETWORK_ERROR"
+	ErrCodeValidationFailed     = "VALIDATION_FAILED"
+	ErrCodeHealthCheckFailed    = "HEALTH_CHECK_FAILED"
 )
 
 // Specific error types for common scenarios
@@ -222,8 +222,8 @@ func NewDependencyNotFoundError(dependencyName, requiredBy string) *DependencyNo
 // DependencyConflictError indicates a dependency conflict.
 type DependencyConflictError struct {
 	*ToolError
-	DependencyName    string
-	RequiredVersion   string
+	DependencyName     string
+	RequiredVersion    string
 	ConflictingVersion string
 }
 
@@ -234,8 +234,8 @@ func NewDependencyConflictError(dependencyName, requiredVersion, conflictingVers
 			fmt.Sprintf("dependency conflict: '%s' requires version '%s' but version '%s' is installed", dependencyName, requiredVersion, conflictingVersion),
 			ErrCodeDependencyConflict,
 		),
-		DependencyName:    dependencyName,
-		RequiredVersion:   requiredVersion,
+		DependencyName:     dependencyName,
+		RequiredVersion:    requiredVersion,
 		ConflictingVersion: conflictingVersion,
 	}
 }
@@ -318,7 +318,7 @@ func NewNetworkError(url string, cause error) *NetworkError {
 // HealthCheckFailedError indicates a health check failed.
 type HealthCheckFailedError struct {
 	*ToolError
-	ToolName string
+	ToolName  string
 	CheckName string
 }
 

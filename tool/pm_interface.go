@@ -11,13 +11,13 @@ import (
 type PMInterface interface {
 	// Version returns the tool version
 	Version() string
-	
+
 	// Description returns what the tool does
 	Description() string
-	
+
 	// Commands returns available commands
 	Commands() []string
-	
+
 	// Validate checks if the tool is properly configured
 	Validate() error
 }
@@ -40,12 +40,12 @@ func QueryTool(toolPath string) (*PMToolInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tool does not support package manager interface: %v", err)
 	}
-	
+
 	var info PMToolInfo
 	if err := json.Unmarshal(output, &info); err != nil {
 		return nil, fmt.Errorf("invalid tool info format: %v", err)
 	}
-	
+
 	return &info, nil
 }
 
@@ -55,19 +55,19 @@ func ValidateTool(toolPath string) error {
 	if err != nil {
 		return fmt.Errorf("tool validation failed: %v", err)
 	}
-	
+
 	if info.Name == "" {
 		return fmt.Errorf("tool name is required")
 	}
-	
+
 	if info.Version == "" {
 		return fmt.Errorf("tool version is required")
 	}
-	
+
 	if len(info.Commands) == 0 {
 		return fmt.Errorf("tool must provide at least one command")
 	}
-	
+
 	// Check if version command exists
 	hasVersion := false
 	for _, cmd := range info.Commands {
@@ -79,7 +79,7 @@ func ValidateTool(toolPath string) error {
 	if !hasVersion {
 		return fmt.Errorf("tool must provide 'version' command")
 	}
-	
+
 	return nil
 }
 
@@ -93,12 +93,12 @@ func HandlePMInfo(name, version, description string, commands []string) {
 		Commands:    commands,
 		Valid:       true,
 	}
-	
+
 	data, err := json.Marshal(info)
 	if err != nil {
 		fmt.Printf(`{"error": "failed to marshal tool info: %v"}`, err)
 		return
 	}
-	
+
 	fmt.Println(string(data))
 }

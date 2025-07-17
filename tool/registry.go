@@ -178,7 +178,6 @@ func (r *DefaultRegistry) Clear() {
 	r.tools = make(map[string]Tool)
 }
 
-
 // Names returns the names of all registered tools.
 func (r *DefaultRegistry) Names() []string {
 	r.mu.RLock()
@@ -306,13 +305,13 @@ func Snapshot() RegistrySnapshot {
 
 // RegistryStats contains statistics about the registry.
 type RegistryStats struct {
-	TotalTools       int
-	InstalledTools   int
-	UpdateableTools  int
-	HealthyTools     int
-	ByInstallMode    map[InstallMode]int
-	ByStatus         map[ToolStatus]int
-	AverageCommands  float64
+	TotalTools      int
+	InstalledTools  int
+	UpdateableTools int
+	HealthyTools    int
+	ByInstallMode   map[InstallMode]int
+	ByStatus        map[ToolStatus]int
+	AverageCommands float64
 }
 
 // Stats returns statistics about the registry.
@@ -329,7 +328,7 @@ func (r *DefaultRegistry) Stats() RegistryStats {
 	totalCommands := 0
 	for _, tool := range r.tools {
 		info := tool.Info()
-		
+
 		// Count by status
 		stats.ByStatus[info.Status]++
 		if info.Status == ToolStatusInstalled {

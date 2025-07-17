@@ -102,83 +102,83 @@ func FormatDuration(d time.Duration) string {
 // FormatToolInfo formats tool information for display.
 func FormatToolInfo(info ToolInfo) string {
 	var parts []string
-	
+
 	parts = append(parts, fmt.Sprintf("Name: %s", info.Name))
 	parts = append(parts, fmt.Sprintf("Version: %s", info.Version))
 	parts = append(parts, fmt.Sprintf("Status: %s", info.Status))
-	
+
 	if info.Description != "" {
 		parts = append(parts, fmt.Sprintf("Description: %s", info.Description))
 	}
-	
+
 	if info.InstallPath != "" {
 		parts = append(parts, fmt.Sprintf("Install Path: %s", info.InstallPath))
 	}
-	
+
 	if info.InstallMode != InstallModeBinary {
 		parts = append(parts, fmt.Sprintf("Install Mode: %s", info.InstallMode))
 	}
-	
+
 	if !info.InstallTime.IsZero() {
 		parts = append(parts, fmt.Sprintf("Installed: %s", info.InstallTime.Format(time.RFC3339)))
 	}
-	
+
 	if len(info.Tags) > 0 {
 		parts = append(parts, fmt.Sprintf("Tags: %s", strings.Join(info.Tags, ", ")))
 	}
-	
+
 	return strings.Join(parts, "\n")
 }
 
 // FormatHealthCheck formats a health check result for display.
 func FormatHealthCheck(name string, health HealthCheck) string {
 	var parts []string
-	
+
 	parts = append(parts, fmt.Sprintf("Tool: %s", name))
 	parts = append(parts, fmt.Sprintf("Status: %s", health.Status))
 	parts = append(parts, fmt.Sprintf("Message: %s", health.Message))
 	parts = append(parts, fmt.Sprintf("Timestamp: %s", health.Timestamp.Format(time.RFC3339)))
-	
+
 	if len(health.Details) > 0 {
 		parts = append(parts, "Details:")
 		for key, value := range health.Details {
 			parts = append(parts, fmt.Sprintf("  %s: %v", key, value))
 		}
 	}
-	
+
 	return strings.Join(parts, "\n")
 }
 
 // FormatCommand formats a command for display.
 func FormatCommand(cmd Command) string {
 	var parts []string
-	
+
 	parts = append(parts, fmt.Sprintf("Name: %s", cmd.Name))
-	
+
 	if cmd.Description != "" {
 		parts = append(parts, fmt.Sprintf("Description: %s", cmd.Description))
 	}
-	
+
 	if cmd.Usage != "" {
 		parts = append(parts, fmt.Sprintf("Usage: %s", cmd.Usage))
 	}
-	
+
 	if len(cmd.Aliases) > 0 {
 		parts = append(parts, fmt.Sprintf("Aliases: %s", strings.Join(cmd.Aliases, ", ")))
 	}
-	
+
 	return strings.Join(parts, "\n")
 }
 
 // FormatDependency formats a dependency for display.
 func FormatDependency(dep Dependency) string {
 	var parts []string
-	
+
 	parts = append(parts, fmt.Sprintf("Name: %s", dep.Name))
 	parts = append(parts, fmt.Sprintf("Version: %s", dep.Version))
 	parts = append(parts, fmt.Sprintf("Type: %s", dep.Type))
 	parts = append(parts, fmt.Sprintf("Required: %t", dep.Required))
-	
+
 	return strings.Join(parts, "\n")
 }
 
@@ -249,7 +249,7 @@ func GroupToolsByInstallMode(tools []Tool) map[InstallMode][]Tool {
 func SortToolsByName(tools []Tool) []Tool {
 	sorted := make([]Tool, len(tools))
 	copy(sorted, tools)
-	
+
 	// Simple bubble sort for now
 	for i := 0; i < len(sorted); i++ {
 		for j := i + 1; j < len(sorted); j++ {
@@ -258,7 +258,7 @@ func SortToolsByName(tools []Tool) []Tool {
 			}
 		}
 	}
-	
+
 	return sorted
 }
 
@@ -266,7 +266,7 @@ func SortToolsByName(tools []Tool) []Tool {
 func SortToolsByVersion(tools []Tool) []Tool {
 	sorted := make([]Tool, len(tools))
 	copy(sorted, tools)
-	
+
 	// Simple bubble sort for now
 	for i := 0; i < len(sorted); i++ {
 		for j := i + 1; j < len(sorted); j++ {
@@ -275,7 +275,7 @@ func SortToolsByVersion(tools []Tool) []Tool {
 			}
 		}
 	}
-	
+
 	return sorted
 }
 
@@ -283,14 +283,14 @@ func SortToolsByVersion(tools []Tool) []Tool {
 func ExecuteWithTimeout(ctx context.Context, tool Tool, commandName string, args []string, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	
+
 	return tool.Execute(ctx, commandName, args)
 }
 
 // ExecuteWithRetry executes a command with retry logic.
 func ExecuteWithRetry(ctx context.Context, tool Tool, commandName string, args []string, maxRetries int) error {
 	var lastErr error
-	
+
 	for i := 0; i <= maxRetries; i++ {
 		if i > 0 {
 			// Wait before retry
@@ -300,27 +300,27 @@ func ExecuteWithRetry(ctx context.Context, tool Tool, commandName string, args [
 				return ctx.Err()
 			}
 		}
-		
+
 		if err := tool.Execute(ctx, commandName, args); err == nil {
 			return nil
 		} else {
 			lastErr = err
 		}
 	}
-	
+
 	return lastErr
 }
 
 // ValidateToolsIntegrity validates the integrity of all registered tools.
 func ValidateToolsIntegrity(ctx context.Context) error {
 	tools := List()
-	
+
 	for _, tool := range tools {
 		if err := tool.Validate(ctx); err != nil {
 			return fmt.Errorf("tool %s failed validation: %w", tool.Name(), err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -338,7 +338,7 @@ func GetToolsWithInstallMode(mode InstallMode) []Tool {
 func GetHealthyTools(ctx context.Context) []Tool {
 	tools := List()
 	var healthy []Tool
-	
+
 	for _, tool := range tools {
 		if healthcheck, ok := tool.(Healthcheck); ok {
 			if health := healthcheck.HealthCheck(ctx); health.Status == HealthStatusHealthy {
@@ -346,7 +346,7 @@ func GetHealthyTools(ctx context.Context) []Tool {
 			}
 		}
 	}
-	
+
 	return healthy
 }
 
@@ -354,7 +354,7 @@ func GetHealthyTools(ctx context.Context) []Tool {
 func GetUnhealthyTools(ctx context.Context) []Tool {
 	tools := List()
 	var unhealthy []Tool
-	
+
 	for _, tool := range tools {
 		if healthcheck, ok := tool.(Healthcheck); ok {
 			if health := healthcheck.HealthCheck(ctx); health.Status != HealthStatusHealthy {
@@ -362,7 +362,7 @@ func GetUnhealthyTools(ctx context.Context) []Tool {
 			}
 		}
 	}
-	
+
 	return unhealthy
 }
 
@@ -370,13 +370,13 @@ func GetUnhealthyTools(ctx context.Context) []Tool {
 func GetUpdatableTools() []Tool {
 	tools := List()
 	var updatable []Tool
-	
+
 	for _, tool := range tools {
 		if updatableTool, ok := tool.(Updatable); ok && updatableTool.CanUpdate() {
 			updatable = append(updatable, tool)
 		}
 	}
-	
+
 	return updatable
 }
 

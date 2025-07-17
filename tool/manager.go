@@ -119,7 +119,7 @@ func (m *DefaultManager) ListTools() []ToolInfo {
 
 	tools := m.registry.List()
 	infos := make([]ToolInfo, len(tools))
-	
+
 	for i, tool := range tools {
 		infos[i] = tool.Info()
 	}
@@ -179,7 +179,7 @@ func (m *DefaultManager) ValidateAll(ctx context.Context) error {
 	defer m.mu.RUnlock()
 
 	tools := m.registry.List()
-	
+
 	for _, tool := range tools {
 		if err := tool.Validate(ctx); err != nil {
 			return fmt.Errorf("validation failed for tool %s: %w", tool.Name(), err)
@@ -195,7 +195,7 @@ func (m *DefaultManager) UpdateAll(ctx context.Context) error {
 	defer m.mu.RUnlock()
 
 	tools := m.registry.List()
-	
+
 	for _, tool := range tools {
 		if tool.Status() == ToolStatusInstalled {
 			if err := m.UpdateTool(ctx, tool.Name(), UpdateOptions{}); err != nil {

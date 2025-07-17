@@ -10,7 +10,7 @@ import (
 func main() {
 	// Create example tool using the simple interface
 	example := tool.NewSimpleTool("example", "1.0.0", "An example tool for demonstration")
-	
+
 	// Add commands
 	example.AddCommand("hello", func(ctx context.Context, args []string) error {
 		name := "World"
@@ -20,7 +20,7 @@ func main() {
 		fmt.Printf("Hello, %s!\n", name)
 		return nil
 	})
-	
+
 	example.AddCommand("status", func(ctx context.Context, args []string) error {
 		fmt.Printf("Tool: %s\n", example.Name())
 		fmt.Printf("Version: %s\n", example.Version())
@@ -28,7 +28,7 @@ func main() {
 		fmt.Printf("Commands: %v\n", example.GetCommands())
 		return nil
 	})
-	
+
 	// Handle all main logic (including --pm-info for package manager)
 	example.HandleMain()
 }

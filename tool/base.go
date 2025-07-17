@@ -38,12 +38,12 @@ type BaseTool struct {
 // NewBaseTool creates a new base tool with the given name, version, and description.
 func NewBaseTool(name, version, description string) *BaseTool {
 	return &BaseTool{
-		name:        name,
-		version:     version,
-		description: description,
-		commands:    make([]Command, 0),
-		status:      ToolStatusNotInstalled,
-		config:      make(Config),
+		name:         name,
+		version:      version,
+		description:  description,
+		commands:     make([]Command, 0),
+		status:       ToolStatusNotInstalled,
+		config:       make(Config),
 		dependencies: make([]Dependency, 0),
 		supportedModes: []InstallMode{
 			InstallModeBinary,
@@ -137,7 +137,7 @@ func (t *BaseTool) Install(ctx context.Context, options InstallOptions) error {
 	// Set installation details
 	t.installMode = options.Mode
 	t.installTime = time.Now()
-	
+
 	if options.Path != "" {
 		t.installPath = options.Path
 	} else {

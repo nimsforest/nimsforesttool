@@ -11,13 +11,13 @@ import (
 
 // ValidationResult represents the result of tool validation
 type ValidationResult struct {
-	Valid      bool                   `json:"valid"`
-	ToolName   string                 `json:"tool_name"`
-	ToolPath   string                 `json:"tool_path"`
-	Errors     []ValidationError      `json:"errors"`
-	Warnings   []ValidationWarning    `json:"warnings"`
-	Summary    ValidationSummary      `json:"summary"`
-	Timestamp  time.Time             `json:"timestamp"`
+	Valid     bool                `json:"valid"`
+	ToolName  string              `json:"tool_name"`
+	ToolPath  string              `json:"tool_path"`
+	Errors    []ValidationError   `json:"errors"`
+	Warnings  []ValidationWarning `json:"warnings"`
+	Summary   ValidationSummary   `json:"summary"`
+	Timestamp time.Time           `json:"timestamp"`
 }
 
 // ValidationError represents a validation error
@@ -37,10 +37,10 @@ type ValidationWarning struct {
 
 // ValidationSummary provides a summary of validation results
 type ValidationSummary struct {
-	TotalChecks    int `json:"total_checks"`
-	PassedChecks   int `json:"passed_checks"`
-	FailedChecks   int `json:"failed_checks"`
-	WarningChecks  int `json:"warning_checks"`
+	TotalChecks    int  `json:"total_checks"`
+	PassedChecks   int  `json:"passed_checks"`
+	FailedChecks   int  `json:"failed_checks"`
+	WarningChecks  int  `json:"warning_checks"`
 	InterfaceValid bool `json:"interface_valid"`
 	CommandsValid  bool `json:"commands_valid"`
 	HealthValid    bool `json:"health_valid"`
@@ -48,10 +48,10 @@ type ValidationSummary struct {
 
 // ValidationOptions contains options for tool validation
 type ValidationOptions struct {
-	ToolPath         string `json:"tool_path"`
-	InterfaceVersion string `json:"interface_version"`
-	TestCommands     bool   `json:"test_commands"`
-	Verbose          bool   `json:"verbose"`
+	ToolPath         string        `json:"tool_path"`
+	InterfaceVersion string        `json:"interface_version"`
+	TestCommands     bool          `json:"test_commands"`
+	Verbose          bool          `json:"verbose"`
 	Timeout          time.Duration `json:"timeout"`
 }
 
@@ -209,7 +209,7 @@ func (v *ToolValidator) validateToolMetadata(tool Tool, result *ValidationResult
 // validateToolCommands checks tool commands
 func (v *ToolValidator) validateToolCommands(tool Tool, result *ValidationResult) {
 	commands := tool.Commands()
-	
+
 	if len(commands) == 0 {
 		v.addWarning(result, "commands", "Tool has no commands", "commands")
 		return
@@ -245,11 +245,11 @@ func (v *ToolValidator) validateToolCommands(tool Tool, result *ValidationResult
 	// Check for recommended commands
 	hasHelp := commandNames["help"]
 	hasVersion := commandNames["version"]
-	
+
 	if !hasHelp {
 		v.addWarning(result, "commands", "Tool should have a 'help' command", "commands")
 	}
-	
+
 	if !hasVersion {
 		v.addWarning(result, "commands", "Tool should have a 'version' command", "commands")
 	}
@@ -260,7 +260,7 @@ func (v *ToolValidator) validateToolHealth(ctx context.Context, tool Tool, resul
 	// Test health check (BaseTool implements HealthCheck method)
 	if baseTool, ok := tool.(*BaseTool); ok {
 		health := baseTool.HealthCheck(ctx)
-		
+
 		if health.Status != HealthStatusHealthy && health.Status != HealthStatusUnhealthy && health.Status != HealthStatusDegraded {
 			v.addError(result, "health", "Invalid health status returned", "health")
 		}
@@ -280,7 +280,7 @@ func (v *ToolValidator) validateToolHealth(ctx context.Context, tool Tool, resul
 // testToolCommands tests tool commands if enabled
 func (v *ToolValidator) testToolCommands(ctx context.Context, tool Tool, result *ValidationResult) {
 	commands := tool.Commands()
-	
+
 	for _, cmd := range commands {
 		if cmd.Hidden {
 			continue
@@ -308,10 +308,10 @@ func (v *ToolValidator) generateSummary(result *ValidationResult) {
 		CommandsValid:  v.hasNoErrorsInCategory(result, "commands"),
 		HealthValid:    v.hasNoErrorsInCategory(result, "health"),
 	}
-	
+
 	summary.PassedChecks = summary.TotalChecks - summary.FailedChecks
 	result.Summary = summary
-	
+
 	// Tool is valid if no errors
 	result.Valid = len(result.Errors) == 0
 }
@@ -352,22 +352,22 @@ func (v *ToolValidator) isValidVersion(version string) bool {
 // FormatValidationResult formats validation result for display
 func FormatValidationResult(result *ValidationResult, verbose bool) string {
 	var output strings.Builder
-	
+
 	// Header
 	status := "✅ VALID"
 	if !result.Valid {
 		status = "❌ INVALID"
 	}
-	
+
 	output.WriteString(fmt.Sprintf("Tool Validation: %s\n", status))
 	output.WriteString(fmt.Sprintf("Tool: %s at %s\n", result.ToolName, result.ToolPath))
 	output.WriteString(fmt.Sprintf("Timestamp: %s\n\n", result.Timestamp.Format(time.RFC3339)))
-	
+
 	// Summary
 	s := result.Summary
-	output.WriteString(fmt.Sprintf("Summary: %d checks (%d passed, %d failed, %d warnings)\n\n", 
+	output.WriteString(fmt.Sprintf("Summary: %d checks (%d passed, %d failed, %d warnings)\n\n",
 		s.TotalChecks, s.PassedChecks, s.FailedChecks, s.WarningChecks))
-	
+
 	// Errors
 	if len(result.Errors) > 0 {
 		output.WriteString("❌ Errors:\n")
@@ -376,7 +376,7 @@ func FormatValidationResult(result *ValidationResult, verbose bool) string {
 		}
 		output.WriteString("\n")
 	}
-	
+
 	// Warnings
 	if len(result.Warnings) > 0 {
 		output.WriteString("⚠️  Warnings:\n")
@@ -385,7 +385,7 @@ func FormatValidationResult(result *ValidationResult, verbose bool) string {
 		}
 		output.WriteString("\n")
 	}
-	
+
 	// Detailed info if verbose
 	if verbose {
 		output.WriteString("Detailed Checks:\n")
@@ -393,7 +393,7 @@ func FormatValidationResult(result *ValidationResult, verbose bool) string {
 		output.WriteString(fmt.Sprintf("  Commands: %s\n", boolToStatus(s.CommandsValid)))
 		output.WriteString(fmt.Sprintf("  Health: %s\n", boolToStatus(s.HealthValid)))
 	}
-	
+
 	return output.String()
 }
 

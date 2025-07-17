@@ -62,10 +62,10 @@ func (t *SimpleTool) ShowUsage() {
 	fmt.Printf("Usage: %s <command> [args...]\n", t.name)
 	fmt.Printf("%s\n\n", t.description)
 	fmt.Println("Available commands:")
-	
+
 	// Always show version
 	fmt.Printf("  version     - Show %s version\n", t.name)
-	
+
 	// Show other commands
 	for cmd := range t.commands {
 		if cmd != "version" {
@@ -90,21 +90,21 @@ func (t *SimpleTool) HandleMain() {
 		fmt.Printf("%s version %s\n", t.name, t.version)
 		return nil
 	})
-	
+
 	// Handle package manager info query
 	if len(os.Args) >= 2 && os.Args[1] == "--pm-info" {
 		HandlePMInfo(t.name, t.version, t.description, t.GetCommands())
 		return
 	}
-	
+
 	if len(os.Args) < 2 {
 		t.ShowUsage()
 		os.Exit(1)
 	}
-	
+
 	command := os.Args[1]
 	args := os.Args[2:]
-	
+
 	if err := t.Execute(context.Background(), command, args); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
