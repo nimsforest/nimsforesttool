@@ -32,3 +32,9 @@ Announce only what the tool actually emits over the bus: `Publishes` stays
 empty when inbound data reaches the forest another way (HTTP webhook
 sources). Health checks state what is missing, stale or failed — a derived
 or paid store says when its data was last bought.
+
+For upstreams with no API at all, the `web` subpackage logs in through a
+local PinchTab browser once, exports the resulting cookie jar (HttpOnly
+cookies included), and hands the tool an authenticated `*http.Client`
+with automatic single-flight re-login on 401. Stdlib only. See the web
+section of `docs/runbooks/adopt.md`.

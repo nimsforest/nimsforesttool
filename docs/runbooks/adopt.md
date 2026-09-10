@@ -44,3 +44,48 @@ into your build.
 
 Library only — tag `vX.Y.Z` and push the tag; there is no image, no
 deploy-token record, no CI publish step.
+
+## Web-only upstreams: the web package
+
+Some tools sit on an upstream that has no API, only a login form and a
+private JSON API behind it (#356, built in #357). The `web` subpackage
+drives the login through a local PinchTab daemon once, copies the browser
+cookies (HttpOnly included) into a jar, and hands the tool an
+authenticated `*http.Client`. A 401, or a redirect to the login host,
+triggers one automatic re-login and one retry; concurrent requests wait
+for the same login. The browser is for login, and for the rare action
+with no XHR path. Data rides plain HTTP through the client.
+
+```go
+b := web.NewBrowser() // reads PINCHTAB_URL and PINCHTAB_TOKEN
+
+s := web.NewSession(b, web.Credentials{
+    URL: "https://portal.example.com", Username: user, Password: pass,
+}, web.FormFlow{
+    UsernameFields: []string{"Email", "E-mailadres"},
+    PasswordFields: []string{"Password", "Wachtwoord"},
+    SubmitButtons:  []string{"Sign in", "Aanmelden"},
+    SuccessCookie: "session", CookieDomain: "portal.example.com",
+})
+
+client := s.Client() // logs in lazily, sends the jar on every request
+
+mux.HandleFunc("GET /health", tool.HealthHandler(name, map[string]tool.Check{
+    "web-session": s.Check(),
+}))
+```
+
+Troubleshooting:
+
+- Every PinchTab call fails with HTTP 401: `PINCHTAB_TOKEN` is unset or
+  wrong in the tool's environment; the daemon token wins.
+- `element not found` on login: the upstream changed its form; the
+  `FormFlow` names are accessibility names from `/snapshot`, update them
+  there. `FindRef` already falls back to a case-insensitive contains
+  match, so prefer stable words over full labels.
+- `cookie never appeared`: the form was submitted but the login failed
+  (bad credentials, MFA page, captcha). Open the daemon's tab and look;
+  the package never reads page content into errors.
+- A POST is not retried after 401: request bodies are replayed only when
+  `req.GetBody` is set (stdlib does this for `bytes` and `strings`
+  readers). Streams are handed back to the caller with the 401.
