@@ -10,6 +10,23 @@ module makes those five things one import.
 Depends only on NATS, never on nimsforest2, so any Go binary can embed it
 and this repo stays public.
 
+The embedding process announces itself; the library is not a separate deployed
+service. [nimsforesttoolsregistry](https://github.com/nimsforest/nimsforesttoolsregistry)
+collects these announcements for the Admin overview alongside native agent tools.
+`Info.Tools` optionally declares stable tool keys, NIM/responsibility assignments,
+facets, connection identifiers, and the CLI commands actually shipped by the host.
+Leave it empty for a service that has no agent-facing commands yet. Never put
+credentials in declarations. Connection ownership and named-person authorization
+remain with the organization's existing access management.
+
+Registration generates a boot-specific `instance_id`. Every 30 seconds the
+existing heartbeat subject carries the full declaration, allowing a receiver
+that starts late or reconnects to recover. Older receivers can still read `name`.
+`Stop` is idempotent and includes the instance identity in deregistration.
+Registration takes an immutable snapshot of the supplied metadata. A heartbeat
+means the process is present; it does not prove an integration is authorized or
+syncing. The shared `Catalog` read model keeps definitions and instances separate.
+
 ```go
 org, err := tool.RequireOrg(cfg.OrgSlug)
 
