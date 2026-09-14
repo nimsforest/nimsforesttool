@@ -9,10 +9,13 @@
 package tool
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -38,6 +41,8 @@ type Info struct {
 	Publishes    []string          `json:"publishes"`
 	Subscribes   []string          `json:"subscribes"`
 	Capabilities map[string]string `json:"capabilities,omitempty"`
+	InstanceID   string            `json:"instance_id,omitempty"`
+	Tools        []Definition      `json:"tools,omitempty"`
 }
 
 // Publisher is the one bus operation registration needs. *nats.Conn satisfies
@@ -71,10 +76,11 @@ func drop(p Publisher, subject string, payload any, source string) error {
 // Registration is a live announcement: the register leaf has been dropped and
 // heartbeats run until Stop, which deregisters.
 type Registration struct {
-	info Info
-	pub  Publisher
-	stop chan struct{}
-	done chan struct{}
+	info     Info
+	pub      Publisher
+	stop     chan struct{}
+	done     chan struct{}
+	stopOnce sync.Once
 }
 
 // Register announces the tool and starts its heartbeat. Stop the returned
@@ -83,12 +89,32 @@ func Register(p Publisher, info Info) (*Registration, error) {
 	if info.Name == "" {
 		return nil, errors.New("tool: Info.Name is required")
 	}
+	if err := ValidateDefinitions(info.Tools); err != nil {
+		return nil, err
+	}
+	if info.InstanceID == "" {
+		var identity [16]byte
+		if _, err := rand.Read(identity[:]); err != nil {
+			return nil, err
+		}
+		info.InstanceID = hex.EncodeToString(identity[:])
+	}
 	if info.Publishes == nil {
 		info.Publishes = []string{}
 	}
 	if info.Subscribes == nil {
 		info.Subscribes = []string{}
 	}
+	// Own a snapshot: callers may reuse or edit their declaration after Register.
+	snapshot, err := json.Marshal(info)
+	if err != nil {
+		return nil, err
+	}
+	var frozen Info
+	if err := json.Unmarshal(snapshot, &frozen); err != nil {
+		return nil, err
+	}
+	info = frozen
 	if err := drop(p, subjectRegister, info, info.Name); err != nil {
 		return nil, fmt.Errorf("tool: register: %w", err)
 	}
@@ -110,7 +136,7 @@ func (r *Registration) heartbeat() {
 	for {
 		select {
 		case <-t.C:
-			_ = drop(r.pub, subject, map[string]string{"name": r.info.Name}, r.info.Name)
+			_ = r.announceHeartbeat(subject)
 		case <-r.stop:
 			return
 		}
@@ -119,9 +145,18 @@ func (r *Registration) heartbeat() {
 
 // Stop ends the heartbeat and announces shutdown.
 func (r *Registration) Stop() {
-	close(r.stop)
-	<-r.done
-	_ = drop(r.pub, subjectDeregister, map[string]string{"name": r.info.Name}, r.info.Name)
+	r.stopOnce.Do(func() {
+		close(r.stop)
+		<-r.done
+		_ = drop(r.pub, subjectDeregister, map[string]string{"name": r.info.Name, "org_slug": r.info.OrgSlug, "instance_id": r.info.InstanceID}, r.info.Name)
+	})
+}
+
+// A full declaration on the existing heartbeat wire makes late-starting
+// registries and NATS reconnects recover within one heartbeat. Older receivers
+// continue reading the name field. Presence does not imply provider readiness.
+func (r *Registration) announceHeartbeat(subject string) error {
+	return drop(r.pub, subject, r.info, r.info.Name)
 }
 
 // RequireOrg asserts single-tenant deployment: ORG_SLUG must be set, and when
