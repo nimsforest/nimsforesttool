@@ -4,8 +4,8 @@ The embeddable half of the NimsForest supporting-tool contract
 (`nimsforest2/docs/architecture/SUPPORTING_TOOLS.md`, master issue #293 on
 issues.nimsforest.mynimsforest.com). A tool that joins an organization's
 forest announces itself, heartbeats, asserts tenancy, vends credentials
-through the loopback proxy, and serves an honest health surface — this
-module makes those five things one import.
+through the loopback proxy, is placed by its role, and serves an honest
+health surface — this module makes those six things one import.
 
 Depends only on NATS, never on nimsforest2, so any Go binary can embed it
 and this repo stays public.
@@ -30,6 +30,10 @@ syncing. The shared `Catalog` read model keeps definitions and instances separat
 ```go
 org, err := tool.RequireOrg(cfg.OrgSlug)
 
+// Placement belongs to the role. The built-in default is a local-run
+// convenience, never a reserved port.
+addr := tool.ListenAddr(addrFlag, fmt.Sprintf(":%d", cfg.HTTP.Port))
+
 reg, err := tool.RegisterConn(nc, tool.Info{
     Name: "nimsforestexample", OrgSlug: org, Kind: "service",
     Version: version, Subscribes: []string{"song.example.>"},
@@ -49,6 +53,47 @@ Announce only what the tool actually emits over the bus: `Publishes` stays
 empty when inbound data reaches the forest another way (HTTP webhook
 sources). Health checks state what is missing, stale or failed — a derived
 or paid store says when its data was last bought.
+
+## Placement
+
+These containers run `network: host`, so the address the binary binds is
+the address on the host. Neither the registry, the image, nor the OCI push
+decides it. A role places a service by setting `LISTEN`, and
+`tool.ListenAddr` is the one supported way to resolve it: an explicit
+`--addr` override first, then `LISTEN`, then the built-in default. Bare
+port numbers are normalized, so `LISTEN=8112` places the service rather
+than being silently ignored.
+
+Two tools may share a default port safely, because the role places them.
+A default that cannot be overridden by env is the actual defect: the
+env-plus-vend roles mount no config file, so an address reachable only
+from a config file is hard-wired in practice.
+
+## Conformance
+
+`tooltest` is the guard. A tool that embeds this module calls it from its
+own tests, so divergence fails that repo's CI rather than surfacing on a
+Land:
+
+```go
+func TestContractConformance(t *testing.T) {
+    tooltest.Conform(t, tooltest.Options{
+        Package:                    "./cmd/nimsforestexample",
+        Args:                       []string{"serve"},
+        DefaultPort:                8108,
+        ExpectDegradedUnconfigured: true,
+    })
+}
+```
+
+It is black-box on purpose: it builds the real command and drives the real
+process, because the failure worth catching is a tool that imports this
+module and then resolves its own listen address anyway. It asserts that
+tenancy is refused without `ORG_SLUG` and says so, that `LISTEN` actually
+places the process while the built-in default stays unbound, that both
+`/health` and `/api/v1/health` return the standard envelope, that an
+unconfigured tenant is honestly degraded with per-check detail, and that
+SIGTERM is obeyed so a role can replant cleanly.
 
 For upstreams with no API at all, the `web` subpackage logs in through a
 local PinchTab browser once, exports the resulting cookie jar (HttpOnly

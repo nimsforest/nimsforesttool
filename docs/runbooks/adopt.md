@@ -13,7 +13,7 @@ go get github.com/nimsforest/nimsforesttool@latest
 The module is public and depends only on NATS; it never drags nimsforest2
 into your build.
 
-## Wire the four pieces
+## Wire the five pieces
 
 1. **Tenancy** — at startup, before anything else:
    `org, err := tool.RequireOrg(cfg.OrgSlug)`. Fail fast on error.
@@ -28,6 +28,41 @@ into your build.
 4. **Credentials** — replace hand-rolled loopback vend fetches with
    `tool.NewVendClient().Vend(ctx, "<what>/key", &out)`. Never read
    credentials from role configs.
+5. **Placement** — resolve the bound address with
+   `tool.ListenAddr(addrFlag, defaultAddr)`. The role places the service
+   by setting `LISTEN`; your built-in default is a local-run convenience,
+   never a reserved port. Do not read `LISTEN` by hand and do not build
+   the address from a config port alone: these containers run
+   `network: host`, and the env-plus-vend roles mount no config file, so
+   an address reachable only from a config file cannot be moved.
+
+## Prove it: the conformance suite
+
+Add one test per repo. It fails your CI when the tool drifts from the
+contract, which is the whole point of the component being shared:
+
+```go
+func TestContractConformance(t *testing.T) {
+    tooltest.Conform(t, tooltest.Options{
+        Package:                    "./cmd/nimsforestexample",
+        Args:                       []string{"serve"},
+        DefaultPort:                8108,
+        ExpectDegradedUnconfigured: true,
+    })
+}
+```
+
+`Conform` builds the real command and drives the real process. It asserts
+that the tool refuses to start without `ORG_SLUG` and names it, that
+`LISTEN` places the process while the built-in default stays unbound,
+that both `/health` and `/api/v1/health` return the standard envelope,
+that an unconfigured tenant reports degraded with per-check detail, and
+that SIGTERM is obeyed so a role can replant cleanly.
+
+Set `ExpectDegradedUnconfigured: false` only for a tool that genuinely
+needs no credential to be healthy. Pass anything else the process needs
+to boot in `Env`; the suite owns `ORG_SLUG` and `LISTEN` and rejects them
+there.
 
 ## Troubleshooting
 
