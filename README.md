@@ -100,3 +100,29 @@ local PinchTab browser once, exports the resulting cookie jar (HttpOnly
 cookies included), and hands the tool an authenticated `*http.Client`
 with automatic single-flight re-login on 401. Stdlib only. See the web
 section of `docs/runbooks/adopt.md`.
+
+## Systems and capabilities
+
+`Definition.Kind` describes invocation (`native`, `cli`, `service`). Optional
+`System` identifies the upstream product; `Capabilities` describes its separate
+uses: `system_of_record`, `communication` or `data_source`. Grep is a native tool
+without an upstream system. Basecamp can declare task records and chat on one
+organization connection. OkiOki can declare accounting documents and bookings.
+
+Each capability has explicit `available` or `planned` delivery status, surfaces
+(`tool`, `source`, `songbird`), and responsibility assignments drawn from the
+parent definition. `record_types` is mandatory only for systems of record.
+`source` means incoming observations; `songbird` means outbound communication.
+Only shipped executable commands belong in `CLI`, even when future capabilities
+are listed. An online process never makes a planned capability available.
+
+These additive schema-v1 fields survive announcements, heartbeats and released
+owner manifests. Upgrade catalog readers before installing enriched manifests
+because older strict manifest readers reject unknown fields. The embedding
+service publishes the definition; this library is not a separately deployed tool.
+
+A record capability describes where a type of business record can live. It does
+not select an authoritative account/project/ledger for an organization, grant a
+person access, assign a runtime skill, or authorize writes. Organization grants,
+record scope, the named person's permissions and runtime tool policy remain
+separate. See the [canonical model](https://github.com/nimsforest/nimsforest2/blob/main/docs/architecture/NIM_WORK_AND_SYSTEMS.md).
