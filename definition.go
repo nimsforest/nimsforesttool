@@ -9,14 +9,16 @@ import (
 // Definition describes an agent tool independently of the process carrying it.
 // Native invocation names remain exact; Key is its stable catalog identity.
 type Definition struct {
-	Key         string       `json:"key" yaml:"key"`
-	Name        string       `json:"name" yaml:"name"`
-	Description string       `json:"description" yaml:"description"`
-	Kind        string       `json:"kind" yaml:"kind"` // native, cli, service
-	Version     string       `json:"version,omitempty" yaml:"version,omitempty"`
-	Assignments []Assignment `json:"assignments,omitempty" yaml:"assignments,omitempty"`
-	CLI         *CLI         `json:"cli,omitempty" yaml:"cli,omitempty"`
-	Connection  *Connection  `json:"connection,omitempty" yaml:"connection,omitempty"`
+	Key          string       `json:"key" yaml:"key"`
+	Name         string       `json:"name" yaml:"name"`
+	Description  string       `json:"description" yaml:"description"`
+	Kind         string       `json:"kind" yaml:"kind"` // native, cli, service
+	Version      string       `json:"version,omitempty" yaml:"version,omitempty"`
+	Assignments  []Assignment `json:"assignments,omitempty" yaml:"assignments,omitempty"`
+	CLI          *CLI         `json:"cli,omitempty" yaml:"cli,omitempty"`
+	Connection   *Connection  `json:"connection,omitempty" yaml:"connection,omitempty"`
+	System       *System      `json:"system,omitempty" yaml:"system,omitempty"`
+	Capabilities []Capability `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
 }
 
 type Assignment struct {
@@ -98,6 +100,9 @@ func ValidateDefinitions(definitions []Definition) error {
 		}
 		if definition.Connection != nil && (!stableKey.MatchString(definition.Connection.IntegrationType) || !stableKey.MatchString(definition.Connection.Mechanism)) {
 			return fmt.Errorf("tool: invalid connection identifiers for %q", definition.Key)
+		}
+		if err := validateCapabilities(definition); err != nil {
+			return err
 		}
 	}
 	return nil
