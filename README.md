@@ -19,6 +19,11 @@ Leave it empty for a service that has no agent-facing commands yet. Never put
 credentials in declarations. Connection ownership and named-person authorization
 remain with the organization's existing access management.
 
+`Info.Models` lets a provider announce the models it serves (AI_BRAINS rule 1).
+Each `ModelInfo` names one model and can carry provider-specific options as
+plain strings. The field is additive and `omitempty`: an empty list adds no
+wire bytes, and older receivers ignore it.
+
 Registration generates a boot-specific `instance_id`. Every 30 seconds the
 existing heartbeat subject carries the full declaration, allowing a receiver
 that starts late or reconnects to recover. Older receivers can still read `name`.

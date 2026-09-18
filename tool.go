@@ -43,6 +43,17 @@ type Info struct {
 	Capabilities map[string]string `json:"capabilities,omitempty"`
 	InstanceID   string            `json:"instance_id,omitempty"`
 	Tools        []Definition      `json:"tools,omitempty"`
+	Models       []ModelInfo       `json:"models,omitempty"`
+}
+
+// ModelInfo announces one model a provider serves (AI_BRAINS rule 1:
+// providers announce models). Name is the model identity as the provider's
+// API accepts it. Options carries provider-specific metadata as plain
+// strings. The field is additive: an empty Models marshals to nothing, and
+// older receivers ignore it.
+type ModelInfo struct {
+	Name    string            `json:"name"`
+	Options map[string]string `json:"options,omitempty"`
 }
 
 // Publisher is the one bus operation registration needs. *nats.Conn satisfies

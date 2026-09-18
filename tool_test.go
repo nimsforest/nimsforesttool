@@ -57,6 +57,43 @@ func TestRegisterAnnouncesWithLeafEnvelopeAndDeregistersOnStop(t *testing.T) {
 	}
 }
 
+func TestRegisterRoundTripsModels(t *testing.T) {
+	bus := &fakeBus{}
+	declared := []ModelInfo{{Name: "jev-latest", Options: map[string]string{"provider": "typesafe"}}}
+	r, err := Register(bus, Info{Name: "nimsforestjudge", Models: declared})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+
+	var l struct {
+		Data json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(bus.msgs[0].body), &l); err != nil {
+		t.Fatal(err)
+	}
+	var info Info
+	if err := json.Unmarshal(l.Data, &info); err != nil {
+		t.Fatal(err)
+	}
+	if len(info.Models) != 1 || info.Models[0].Name != "jev-latest" || info.Models[0].Options["provider"] != "typesafe" {
+		t.Fatalf("Models did not round-trip: %+v", info.Models)
+	}
+}
+
+func TestEmptyModelsOmittedFromWire(t *testing.T) {
+	bus := &fakeBus{}
+	r, err := Register(bus, Info{Name: "nimsforestexample"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+
+	if strings.Contains(bus.msgs[0].body, "models") {
+		t.Fatalf("empty Models must not appear on the wire: %s", bus.msgs[0].body)
+	}
+}
+
 func TestRegisterRequiresName(t *testing.T) {
 	if _, err := Register(&fakeBus{}, Info{}); err == nil {
 		t.Fatal("want error for missing name")
